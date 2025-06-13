@@ -18,7 +18,7 @@ FROM eclipse-temurin:17-jdk-jammy
 WORKDIR /app
 
 # Copier le JAR depuis le builder
-COPY --from=builder /app/target/gateway-service-0.0.1-SNAPSHOT.jar ./gateway-service.jar
+COPY target/discovery-server-0.0.1-SNAPSHOT.jar discovery-server.jar
 
 # Exposer le port utilisé par le Gateway (8088)
 EXPOSE 8088
