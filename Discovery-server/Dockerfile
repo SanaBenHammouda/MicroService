@@ -1,14 +1,13 @@
-# Utiliser une image JDK 17 (ou celle compatible avec ton projet)
-FROM eclipse-temurin:17-jdk-jammy
-
-# Répertoire de travail dans le container
+# Étape 1 : Build avec Maven
+FROM maven:3.9.0-eclipse-temurin-17 AS builder
 WORKDIR /app
+COPY pom.xml .
+COPY src ./src
+RUN mvn clean package -DskipTests
 
-# Copier le jar construit dans le container
-COPY target/discovery-server.jar discovery-server.jar
-
-# Exposer le port 8761 (celui de Eureka)
+# Étape 2 : Image finale avec JDK
+FROM eclipse-temurin:17-jdk-jammy
+WORKDIR /app
+COPY --from=builder /app/target/Discovery-server-0.0.1-SNAPSHOT.jar discovery-server.jar
 EXPOSE 8761
-
-# Commande pour lancer l'application
 ENTRYPOINT ["java", "-jar", "discovery-server.jar"]
