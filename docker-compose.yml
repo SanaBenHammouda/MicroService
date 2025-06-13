@@ -1,33 +1,87 @@
+version: "3.9"  # tu peux aussi supprimer cette ligne, elle est optionnelle et obsolète
+
+networks:
+  spring-cloud:
+
 services:
-  gateway-service:
-    build: ./gateway-service
+
+  config-server:
+    image: openjdk:17-jdk  # Remplace par ton image custom ou build si besoin
+    container_name: config-server
+    volumes:
+      - ./config-server/target/config-server-0.0.1-SNAPSHOT.jar:/app/config-server.jar
+      - ./config-repo:/app/config-repo
+    working_dir: /app
+    command: ["java", "-jar", "config-server.jar"]
     ports:
-      - "8088:8088"
+      - "8888:8888"
+    networks:
+      - spring-cloud
 
   discovery-server:
-    build: ./discovery-server
+    build:
+      context: ./Discovery-server
+    container_name: discovery-server
     ports:
       - "8761:8761"
+    networks:
+      - spring-cloud
+    depends_on:
+      - config-server
+
+  api-gateway:
+    build:
+      context: ./APIGateway
+    container_name: api-gateway
+    ports:
+      - "8088:8080"
+    networks:
+      - spring-cloud
+    depends_on:
+      - config-server
+      - discovery-server
 
   student-service:
-    build: ./student-service
+    build:
+      context: ./project-student
+    container_name: student-service
     ports:
       - "8085:8085"
+    networks:
+      - spring-cloud
+    depends_on:
+      - config-server
+      - discovery-server
+      - mysql-db  # si tu as une base MySQL dans le compose
 
   course-service:
-    build: C:\Users\bhsan\OneDrive\Bureau\microservice\project-course
+    build:
+      context: ./project-course
+    container_name: course-service
     ports:
-      - "8086:8086"
+      - "8082:8082"
+    networks:
+      - spring-cloud
+    depends_on:
+      - config-server
+      - discovery-server
+      - mongo-db  # si tu as une base MongoDB dans le compose
 
-  mysql:
+  mysql-db:
     image: mysql:8.0
-    ports:
-      - "3306:3306"
+    container_name: mysql-db
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: studentsdb
+      MYSQL_DATABASE: studentdb
+    ports:
+      - "3306:3306"
+    networks:
+      - spring-cloud
 
-  mongodb:
-    image: mongo
+  mongo-db:
+    image: mongo:5.0
+    container_name: mongo-db
     ports:
       - "27017:27017"
+    networks:
+      - spring-cloud
