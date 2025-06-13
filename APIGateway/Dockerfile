@@ -1,27 +1,13 @@
-# Étape 1 : Builder avec Maven
+# Étape 1 : Build avec Maven
 FROM maven:3.9.0-eclipse-temurin-17 AS builder
-
-# Créer un dossier de travail
 WORKDIR /app
-
-# Copier le pom.xml et les sources
 COPY pom.xml .
 COPY src ./src
-
-# Build du projet Spring Boot
 RUN mvn clean package -DskipTests
 
-
-# Étape 2 : Image finale
+# Étape 2 : Image finale avec JDK
 FROM eclipse-temurin:17-jdk-jammy
-
 WORKDIR /app
-
-# Copier le JAR depuis le builder
-COPY target/discovery-server-0.0.1-SNAPSHOT.jar discovery-server.jar
-
-# Exposer le port utilisé par le Gateway (8088)
+COPY --from=builder /app/target/api-gateway-0.0.1-SNAPSHOT.jar api-gateway.jar
 EXPOSE 8088
-
-# Lancer le Gateway
-ENTRYPOINT ["java", "-jar", "gateway-service.jar"]
+ENTRYPOINT ["java", "-jar", "api-gateway.jar"]
